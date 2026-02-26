@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake - Gamers</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        canvas {
+            background: #111;
+            display: block;
+            margin: 50px auto;
+            border: 2px solid #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🐍 Snake</h2>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="score">Score : 0</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const grid = 20;
+let count = 0;
+let snake = { x: 160, y: 160, cells: [], maxCells: 4 };
+let apple = { x: 320, y: 320 };
+let dx = grid;
+let dy = 0;
+let score = 0;
+
+// Random position
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min) / grid) * grid;
+}
+
+// Game loop
+function loop() {
+    requestAnimationFrame(loop);
+    if (++count < 4) return;
+    count = 0;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    snake.x += dx;
+    snake.y += dy;
+
+    // Wall collision
+    if (snake.x < 0) snake.x = canvas.width - grid;
+    if (snake.y < 0) snake.y = canvas.height - grid;
+    if (snake.x >= canvas.width) snake.x = 0;
+    if (snake.y >= canvas.height) snake.y = 0;
+
+    snake.cells.unshift({x: snake.x, y: snake.y});
+
+    if (snake.cells.length > snake.maxCells) snake.cells.pop();
+
+    // Draw apple
+    ctx.fillStyle = "red";
+    ctx.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+    // Draw snake
+    ctx.fillStyle = "lime";
+    snake.cells.forEach((cell, index) => {
+        ctx.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+        // Snake eats apple
+        if (cell.x === apple.x && cell.y === apple.y) {
+            snake.maxCells++;
+            score++;
+            document.getElementById("score").innerText = "Score : " + score;
+            apple.x = getRandomInt(0, canvas.width);
+            apple.y = getRandomInt(0, canvas.height);
+        }
+
+        // Collision with self
+        for (let i = index + 1; i < snake.cells.length; i++) {
+    if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        // Bloquer le jeu
+        cancelAnimationFrame(loop);
+
+        // Game Over + gestion vies
+        let lives = parseInt(sessionStorage.getItem("lives")) || 0;
+
+        if (lives < 5) {
+            if (confirm("💀 Game Over ! Score : " + score + "\n📺 Regarder une pub pour récupérer une vie ?")) {
+                simulateAdSnake();
+            } else {
+                window.location.href = "../index.html";
+            }
+        } else {
+            alert("💀 Game Over ! Score : " + score);
+            window.location.href = "../index.html";
+        }
+    }
+}
+    });
+}
+
+// Keyboard
+document.addEventListener("keydown", function(e) {
+    if (e.key === "ArrowLeft" && dx === 0) { dx = -grid; dy = 0; }
+    if (e.key === "ArrowRight" && dx === 0) { dx = grid; dy = 0; }
+    if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -grid; }
+    if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = grid; }
+});
+
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
